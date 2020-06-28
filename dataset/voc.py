@@ -4,6 +4,9 @@ import numpy as np
 import xml.etree.ElementTree as ET
 from PIL import Image
 from dataset.augmentions import *
+from dataset.transform import SSDTargetTransform
+from utils.prior_box import PriorBox
+
 
 class VOCDataset(torch.utils.data.Dataset):
     class_names = ('__background__', 'aeroplane', 'bicycle', 'bird', 'boat',
@@ -16,6 +19,7 @@ class VOCDataset(torch.utils.data.Dataset):
                  split,
                  transform=None,
                  target_transform=None,
+                 img_size=300,
                  keep_difficult=False):
         """Dataset for VOC data.
         Args:
@@ -43,7 +47,7 @@ class VOCDataset(torch.utils.data.Dataset):
                 ToTensor()
             ]
         self.transform = Compose(transform)
-        self.target_transform = target_transform
+        self.target_transform = SSDTargetTransform(PriorBox()(), 0.1, 0.2, 0.5)
         image_sets_file = os.path.join(self.data_dir, "ImageSets", "Main",
                                        "%s.txt" % self.split)
         self.ids = VOCDataset._read_image_ids(image_sets_file)
