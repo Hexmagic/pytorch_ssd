@@ -3,8 +3,7 @@ import torch.utils.data
 import numpy as np
 import xml.etree.ElementTree as ET
 from PIL import Image
-
-
+from dataset.augmentions import *
 
 class VOCDataset(torch.utils.data.Dataset):
     class_names = ('__background__', 'aeroplane', 'bicycle', 'bird', 'boat',
@@ -25,7 +24,25 @@ class VOCDataset(torch.utils.data.Dataset):
         """
         self.data_dir = data_dir
         self.split = split
-        self.transform = transform
+        if split == 'train':
+            transform = [
+                ConvertFromInts(),
+                PhotometricDistort(),
+                Expand([123, 117, 104]),
+                RandomSampleCrop(),
+                RandomMirror(),
+                ToPercentCoords(),
+                Resize(img_size),
+                SubtractMeans([123, 117, 104]),
+                ToTensor(),
+            ]
+        else:
+            transform = [
+                Resize(img_size),
+                SubtractMeans([123, 117, 104]),
+                ToTensor()
+            ]
+        self.transform = Compose(transform)
         self.target_transform = target_transform
         image_sets_file = os.path.join(self.data_dir, "ImageSets", "Main",
                                        "%s.txt" % self.split)

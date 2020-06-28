@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from model.vgg import SeparableConv2d
+from model.vgg import SeparableConv2d, VGG
 from model.loss import MultiBoxLoss
 
 
@@ -84,3 +84,17 @@ class SSDBoxHead(nn.Module):
         )
         detections = (cls_logits, bbox_pred)
         return detections, loss_dict
+
+
+class SSDDetector(nn.Module):
+    def __init__(self, num_classes=21):
+        super().__init__()
+        self.backbone = VGG()
+        self.box_head = SSDBoxHead(num_classes)
+
+    def forward(self, images, targets=None):
+        features = self.backbone(images)
+        detections, detector_losses = self.box_head(features, targets)
+        if self.training:
+            return detector_losses
+        return detections

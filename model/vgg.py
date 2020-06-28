@@ -109,7 +109,7 @@ def add_extras(cfg, i):
 
 
 class VGG(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self):
         super().__init__()
         vgg_config = base_cfg
         extras_config = extras_cfg
