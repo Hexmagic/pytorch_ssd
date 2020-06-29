@@ -50,7 +50,9 @@ def train():
     if not os.path.exists(opt.save_path):
         os.mkdir(opt.save_path)
     dataloader = DataLoader(VOCDataset(data_dir=opt.data_dir, split='train'),
-                            batch_size=opt.batch_size)
+                            batch_size=opt.batch_size,
+                            pin_memory=True,
+                            num_workers=8)
     data_iter = iter(dataloader)
     for iter_i in range(opt.start_iter, opt.iters):
         try:
