@@ -7,6 +7,7 @@ import numpy as np
 from argparse import ArgumentParser
 import os
 import torch
+import time
 
 
 def reduce_loss_dict(loss_dict):
@@ -55,7 +56,7 @@ def train():
                             pin_memory=True,
                             num_workers=8)
     data_iter = iter(dataloader)
-
+    start = time.time()
     for iter_i in range(opt.start_iter, opt.iters):
         try:
             img, target, _ = next(data_iter)
@@ -77,12 +78,16 @@ def train():
         loss.backward()
         optim.step()
         lr_scheduler.step()
-        if i % 10 == 0:
-            print(
-                f"iter {iter_i} loss total {np.mean(total_loss).round(2)} reg {np.mean(reg_losses).round(2)} cls {np.mean(cls_losses).round(2)} Mem {memory} M"
-            )
         if i % 2000 == 0:
             torch.save(model, f"{opt.save_path}/{iter_i}_ssd300.pth")
+        if i % 10 == 0:
+            end = time.time()
+            eta = round(end - start, 2)
+            print(
+                f"iter {iter_i} loss total {np.mean(total_loss).round(2)} reg {np.mean(reg_losses).round(2)} cls {np.mean(cls_losses).round(2)} Mem {memory} M ETA: {eta}"
+            )
+            start = end
+
     torch.save(model, f"{opt.save_path}/ssd300_final.pth")
 
 
