@@ -46,6 +46,18 @@ class VOCDataset(torch.utils.data.Dataset):
                 SubtractMeans([123, 117, 104]),
                 ToTensor()
             ]
+        if split != 'test':
+            image_sets_file = [
+                os.path.join(self.data_dir, f'VOC{year}', "ImageSets", "Main",
+                             "%s.txt" % self.split) for year in [2007, 2012]
+            ]
+            self.ids = VOCDataset._read_image_ids(image_sets_file)
+        else:
+            image_sets_file = [
+                os.path.join(self.data_dir, f'VOC{year}', "ImageSets", "Main",
+                             "%s.txt" % self.split) for year in [2007]
+            ]
+            self.ids = VOCDataset._read_image_ids(image_sets_file)
         self.transform = Compose(transform)
         self.target_transform = SSDTargetTransform(PriorBox()(), 0.1, 0.2, 0.5)
         image_sets_file = os.path.join(self.data_dir, "ImageSets", "Main",
@@ -68,7 +80,8 @@ class VOCDataset(torch.utils.data.Dataset):
         if self.transform:
             image, boxes, labels = self.transform(image, boxes, labels)
         if self.target_transform:
-            boxes, labels = self.target_transform(boxes, labels)
+            if boxes:
+                boxes, labels = self.target_transform(boxes, labels)
         targets = dict(
             boxes=boxes,
             labels=labels,
@@ -83,16 +96,20 @@ class VOCDataset(torch.utils.data.Dataset):
         return len(self.ids)
 
     @staticmethod
-    def _read_image_ids(image_sets_file):
+    def _read_image_ids(image_sets_files):
         ids = []
-        with open(image_sets_file) as f:
-            for line in f:
-                ids.append(line.rstrip())
+        for filename in image_sets_files:
+            with open(filename) as f:
+                lst = filename.split(VOCDataset.sep)
+                lst = lst[:-1]
+                lst[2] = 'Annotations'
+                for line in f:
+                    lst[3] = f'{line.strip()}.xml'
+                    ids.append(VOCDataset.sep.join(lst))
         return ids
 
     def _get_annotation(self, image_id):
-        annotation_file = os.path.join(self.data_dir, "Annotations",
-                                       "%s.xml" % image_id)
+        annotation_file = image_id
         objects = ET.parse(annotation_file).findall("object")
         boxes = []
         labels = []
@@ -126,8 +143,23 @@ class VOCDataset(torch.utils.data.Dataset):
         return {"height": im_info[0], "width": im_info[1]}
 
     def _read_image(self, image_id):
-        image_file = os.path.join(self.data_dir, "JPEGImages",
-                                  "%s.jpg" % image_id)
+        lst = image_id.split(VOCDataset.sep)
+        lst[2] = 'JPEGImages'
+        lst[3] = lst[3].replace('.xml', '.jpg')
+        image_file = VOCDataset.sep.join(lst)
         image = Image.open(image_file).convert("RGB")
         image = np.array(image)
         return image
+
+    def collate_fn(self, batch):
+        imgs,targers,indexs = [],[],[]
+        for img,target,index in zip(*batch)):
+            if target['boxes']:
+                imgs.append(img)
+                targers.append(target)
+                indexs.append(index)        
+
+        imgs = torch.stack(imgs)
+        targets = troch.stack(targets)
+        indexs = troch.stack(indexs)
+        return imgs, targets,indexs
