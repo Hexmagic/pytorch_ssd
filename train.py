@@ -51,9 +51,11 @@ def train():
     opt = parser.parse_args()
     if not os.path.exists(opt.save_path):
         os.mkdir(opt.save_path)
-    dataloader = DataLoader(VOCDataset(data_dir=opt.data_dir, split='train'),
+    data_set = VOCDataset(data_dir=opt.data_dir, split='train')
+    dataloader = DataLoader(data_set,
                             batch_size=opt.batch_size,
                             pin_memory=True,
+                            collate_fn=data_set.collate_fn,
                             num_workers=8)
     data_iter = iter(dataloader)
     start = time.time()
