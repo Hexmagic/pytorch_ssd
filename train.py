@@ -6,6 +6,7 @@ from torch.autograd import Variable
 import numpy as np
 from argparse import ArgumentParser
 import os
+import torch
 
 
 def reduce_loss_dict(loss_dict):
@@ -38,11 +39,11 @@ def train():
     optim = make_optimizer(model)
     lr_scheduler = make_lr_scheduler(optim)
 
-    losses = []
+    total_loss, reg_losses, cls_losses = [], [], []
     i = 0
     parser = ArgumentParser()
     parser.add_argument('--iters', type=int, default=120000)
-    parser.add_argument('--start_iter', type=int, default=0)
+    parser.add_argument('--start_iter', type=int, default=1)
     parser.add_argument('--save_path', type=str, default='weights')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--data_dir', type=str, default='datasets')
@@ -52,26 +53,32 @@ def train():
     dataloader = DataLoader(VOCDataset(data_dir=opt.data_dir, split='train'),
                             batch_size=opt.batch_size)
     data_iter = iter(dataloader)
+
     for iter_i in range(opt.start_iter, opt.iters):
         try:
-            img, target = next(data_iter)
+            img, target, _ = next(data_iter)
         except:
             data_iter = iter(dataloader)
-            img, target = next(data_iter)
+            img, target, _ = next(data_iter)
         i += 1
+        memory = torch.cuda.max_memory_allocated() // 1024 // 1024
         img = Variable(img).cuda()
         for key in target.keys():
             target[key] = Variable(target[key]).cuda()
         loss_dict = model(img, target)
         loss = sum(loss for loss in loss_dict.values())
-        losses.append(loss.item())
+        reg_losses.append(loss_dict['reg_loss'].item())
+        cls_losses.append(loss_dict['cls_loss'].item())
+        total_loss.append(loss.item())
         #loss_dict = reduce_loss_dict(loss)
         optim.zero_grad()
         loss.backward()
         optim.step()
         lr_scheduler.step()
         if i % 10 == 0:
-            print(f"iter {iter_i} loss {np.mean(losses)}")
+            print(
+                f"iter {iter_i} loss total {np.mean(total_loss).round(2)} reg {np.mean(reg_losses).round(2)} cls {np.mean(cls_losses).round(2)} Mem {memory} M"
+            )
         if i % 2000 == 0:
             torch.save(model, f"{opt.save_path}/{iter_i}_ssd300.pth")
     torch.save(model, f"{opt.save_path}/ssd300_final.pth")

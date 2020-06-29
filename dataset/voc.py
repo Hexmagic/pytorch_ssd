@@ -6,6 +6,7 @@ from PIL import Image
 from dataset.augmentions import *
 from dataset.transform import SSDTargetTransform
 from utils.prior_box import PriorBox
+from sys import platform
 
 
 class VOCDataset(torch.utils.data.Dataset):
@@ -13,6 +14,7 @@ class VOCDataset(torch.utils.data.Dataset):
                    'bottle', 'bus', 'car', 'cat', 'chair', 'cow',
                    'diningtable', 'dog', 'horse', 'motorbike', 'person',
                    'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor')
+    sep = '\\' if platform == 'win32' else '/'
 
     def __init__(self,
                  data_dir,
@@ -60,9 +62,6 @@ class VOCDataset(torch.utils.data.Dataset):
             self.ids = VOCDataset._read_image_ids(image_sets_file)
         self.transform = Compose(transform)
         self.target_transform = SSDTargetTransform(PriorBox()(), 0.1, 0.2, 0.5)
-        image_sets_file = os.path.join(self.data_dir, "ImageSets", "Main",
-                                       "%s.txt" % self.split)
-        self.ids = VOCDataset._read_image_ids(image_sets_file)
         self.keep_difficult = keep_difficult
 
         self.class_dict = {
@@ -80,7 +79,7 @@ class VOCDataset(torch.utils.data.Dataset):
         if self.transform:
             image, boxes, labels = self.transform(image, boxes, labels)
         if self.target_transform:
-            if boxes:
+            if boxes.size!=0:
                 boxes, labels = self.target_transform(boxes, labels)
         targets = dict(
             boxes=boxes,
@@ -152,14 +151,14 @@ class VOCDataset(torch.utils.data.Dataset):
         return image
 
     def collate_fn(self, batch):
-        imgs,targers,indexs = [],[],[]
-        for img,target,index in zip(*batch)):
+        imgs, targers, indexs = [], [], []
+        for img, target, index in zip(*batch):
             if target['boxes']:
                 imgs.append(img)
                 targers.append(target)
-                indexs.append(index)        
+                indexs.append(index)
 
         imgs = torch.stack(imgs)
         targets = troch.stack(targets)
         indexs = troch.stack(indexs)
-        return imgs, targets,indexs
+        return imgs, targets, indexs
