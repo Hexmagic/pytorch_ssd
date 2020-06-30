@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 import os
 import torch
 import time
-
+from utils.iter_sampler import IterationBasedBatchSampler
 
 def reduce_loss_dict(loss_dict):
     """
@@ -41,7 +41,7 @@ def make_dataloader(dataset, opt):
     batch_sampler = torch.utils.data.sampler.BatchSampler(
         sampler=sampler, batch_size=batch_size, drop_last=False)
     if max_iter is not None:
-        batch_sampler = samplers.IterationBasedBatchSampler(
+        batch_sampler = IterationBasedBatchSampler(
             batch_sampler, num_iterations=max_iter, start_iter=start_iter)
 
     data_loader = DataLoader(dataset,
