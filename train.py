@@ -35,13 +35,8 @@ def reduce_loss_dict(loss_dict):
     return reduced_losses
 
 
-def make_dataloader(
-    dataset,
-    batch_size,
-    max_iters,
-    start_iter,
-    n_cpu,
-):
+def make_dataloader(dataset, opt):
+    batch_size, max_iters, start_iter, n_cpu, max_iter = opt.batch_size, opt.iters, opt.start_iter, opt.n_cpu, opt.max_iter
     sampler = torch.utils.data.RandomSampler(dataset)
     batch_sampler = torch.utils.data.sampler.BatchSampler(
         sampler=sampler, batch_size=batch_size, drop_last=False)
@@ -64,12 +59,12 @@ def train():
     total_loss, reg_losses, cls_losses = [], [], []
     i = 0
     parser = ArgumentParser()
-    parser.add_argument('--iters', type=int, default=120000)
+    parser.add_argument('--max_iter', type=int, default=120000)
     parser.add_argument('--start_iter', type=int, default=1)
     parser.add_argument('--save_path', type=str, default='weights')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--data_dir', type=str, default='datasets')
-    parser.add_argument('--n_cpu', type=int, default=8,help='num workers')
+    parser.add_argument('--n_cpu', type=int, default=8, help='num workers')
     opt = parser.parse_args()
     if torch.cuda.is_available():
         # This flag allows you to enable the inbuilt cudnn auto-tuner to
@@ -78,8 +73,7 @@ def train():
     if not os.path.exists(opt.save_path):
         os.mkdir(opt.save_path)
     dataset = VOCDataset(data_dir=opt.data_dir, split='train')
-    dataloader = make_dataloader(dataset, opt.batch_size, opt.iters,
-                                 opt.start_iter, opt.n_cpu)
+    dataloader = make_dataloader(dataset, opt)
     start = time.time()
     for iter_i, (img, target, _) in enumerate(dataloader):
         img = Variable(img).cuda()
