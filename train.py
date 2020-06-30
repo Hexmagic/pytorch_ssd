@@ -35,6 +35,27 @@ def reduce_loss_dict(loss_dict):
     return reduced_losses
 
 
+def make_dataloader(
+    dataset,
+    batch_size,
+    max_iters,
+    start_iter,
+    n_cpu,
+):
+    sampler = torch.utils.data.RandomSampler(dataset)
+    batch_sampler = torch.utils.data.sampler.BatchSampler(
+        sampler=sampler, batch_size=batch_size, drop_last=False)
+    if max_iter is not None:
+        batch_sampler = samplers.IterationBasedBatchSampler(
+            batch_sampler, num_iterations=max_iter, start_iter=start_iter)
+
+    data_loader = DataLoader(dataset,
+                             num_workers=n_cpu,
+                             batch_sampler=batch_sampler,
+                             pin_memory=True)
+    return data_loader
+
+
 def train():
     model = SSDDetector().cuda()
     optim = make_optimizer(model)
@@ -48,6 +69,7 @@ def train():
     parser.add_argument('--save_path', type=str, default='weights')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--data_dir', type=str, default='datasets')
+    parser.add_argument('--n_cpu', type=int, default='num_workers')
     opt = parser.parse_args()
     if torch.cuda.is_available():
         # This flag allows you to enable the inbuilt cudnn auto-tuner to
@@ -55,21 +77,11 @@ def train():
         torch.backends.cudnn.benchmark = True
     if not os.path.exists(opt.save_path):
         os.mkdir(opt.save_path)
-    data_set = VOCDataset(data_dir=opt.data_dir, split='train')
-    dataloader = DataLoader(data_set,
-                            batch_size=opt.batch_size,
-                            pin_memory=True,
-                            num_workers=8)
-    data_iter = iter(dataloader)
+    dataset = VOCDataset(data_dir=opt.data_dir, split='train')
+    dataloader = make_dataloader(dataset, opt.batch_size, opt.iters,
+                                 opt.start_iter, opt.n_cpu)
     start = time.time()
-    for iter_i in range(opt.start_iter, opt.iters):
-        try:
-            img, target, _ = next(data_iter)
-        except:
-            data_iter = iter(dataloader)
-            img, target, _ = next(data_iter)
-        i += 1
-        memory = torch.cuda.max_memory_allocated() // 1024 // 1024
+    for iter_i, (img, target, _) in enumerate(dataloader):
         img = Variable(img).cuda()
         for key in target.keys():
             target[key] = Variable(target[key]).cuda()
@@ -83,9 +95,10 @@ def train():
         loss.backward()
         optim.step()
         lr_scheduler.step()
-        if i % 2000 == 0:
+        if iter_i % 5000 == 0:
             torch.save(model, f"{opt.save_path}/{iter_i}_ssd300.pth")
-        if i % 10 == 0:
+        if iter_i % 10 == 0:
+            memory = torch.cuda.max_memory_allocated() // 1024 // 1024
             end = time.time()
             eta = round(end - start, 2)
             print(
