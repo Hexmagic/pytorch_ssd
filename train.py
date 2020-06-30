@@ -49,6 +49,10 @@ def train():
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--data_dir', type=str, default='datasets')
     opt = parser.parse_args()
+    if torch.cuda.is_available():
+        # This flag allows you to enable the inbuilt cudnn auto-tuner to
+        # find the best algorithm to use for your hardware.
+        torch.backends.cudnn.benchmark = True
     if not os.path.exists(opt.save_path):
         os.mkdir(opt.save_path)
     data_set = VOCDataset(data_dir=opt.data_dir, split='train')
