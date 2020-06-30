@@ -36,7 +36,7 @@ def reduce_loss_dict(loss_dict):
 
 
 def make_dataloader(dataset, opt):
-    batch_size, max_iters, start_iter, n_cpu, max_iter = opt.batch_size, opt.iters, opt.start_iter, opt.n_cpu, opt.max_iter
+    batch_size, start_iter, n_cpu, max_iter = opt.batch_size, opt.start_iter, opt.n_cpu, opt.max_iter
     sampler = torch.utils.data.RandomSampler(dataset)
     batch_sampler = torch.utils.data.sampler.BatchSampler(
         sampler=sampler, batch_size=batch_size, drop_last=False)
