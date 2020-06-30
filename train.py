@@ -69,7 +69,7 @@ def train():
     parser.add_argument('--save_path', type=str, default='weights')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--data_dir', type=str, default='datasets')
-    parser.add_argument('--n_cpu', type=int, default='num_workers')
+    parser.add_argument('--n_cpu', type=int, default=8,help='num workers')
     opt = parser.parse_args()
     if torch.cuda.is_available():
         # This flag allows you to enable the inbuilt cudnn auto-tuner to
