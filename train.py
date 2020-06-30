@@ -59,7 +59,6 @@ def train():
     dataloader = DataLoader(data_set,
                             batch_size=opt.batch_size,
                             pin_memory=True,
-                            collate_fn=data_set.collate_fn,
                             num_workers=8)
     data_iter = iter(dataloader)
     start = time.time()
