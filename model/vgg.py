@@ -4,6 +4,11 @@ import torch.nn.init as init
 from torch import nn as nn
 from torch.nn import functional as F
 
+from utils.modelzoo import load_state_dict_from_url
+
+model_urls = {
+    'vgg': 'https://s3.amazonaws.com/amdegroot-models/vgg16_reducedfc.pth',
+}
 class SeparableConv2d(nn.Module):
     def __init__(self,
                  in_channels,
@@ -114,8 +119,7 @@ class VGG(nn.Module):
         vgg_config = base_cfg
         extras_config = extras_cfg
         self.vgg = nn.ModuleList(add_vgg(vgg_config))
-        self.extras = nn.ModuleList(
-            add_extras(extras_config, i=1024))
+        self.extras = nn.ModuleList(add_extras(extras_config, i=1024))
         self.l2_norm = L2Norm(512, scale=20)
         self.init_parameters()
 
@@ -146,3 +150,9 @@ class VGG(nn.Module):
                 features.append(x)
 
         return tuple(features)
+
+def vgg(pretrained=True):
+    model = VGG()
+    if pretrained:
+        model.init_from_pretrain(load_state_dict_from_url(model_urls['vgg']))
+    return model
