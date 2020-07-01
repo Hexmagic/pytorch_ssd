@@ -6,7 +6,7 @@ import torch.utils.data
 from tqdm import tqdm
 from torch.autograd import Variable
 
-from dataset.voc import VOCDataset
+from data.voc import VOCDataset
 from utils.dist_util import all_gather, is_main_process, synchronize
 from utils.evaluation import voc_evaluation
 

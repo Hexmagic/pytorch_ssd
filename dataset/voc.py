@@ -3,8 +3,8 @@ import torch.utils.data
 import numpy as np
 import xml.etree.ElementTree as ET
 from PIL import Image
-from dataset.augmentions import *
-from dataset.transform import SSDTargetTransform
+from data.augmentions import *
+from data.transform import SSDTargetTransform
 from utils.prior_box import PriorBox
 from sys import platform
 

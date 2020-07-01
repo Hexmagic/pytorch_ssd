@@ -1,4 +1,4 @@
-from dataset.voc import VOCDataset
+from data.voc import VOCDataset
 from torch.utils.data import DataLoader
 from utils.lr_scheduler import make_optimizer, make_lr_scheduler
 from model.ssd import SSDDetector
