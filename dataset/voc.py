@@ -22,6 +22,7 @@ class VOCDataset(torch.utils.data.Dataset):
                  transform=None,
                  target_transform=None,
                  img_size=300,
+                 years=[2007],
                  keep_difficult=False):
         """Dataset for VOC data.
         Args:
@@ -51,7 +52,7 @@ class VOCDataset(torch.utils.data.Dataset):
         if split != 'test':
             image_sets_file = [
                 os.path.join(self.data_dir, f'VOC{year}', "ImageSets", "Main",
-                             "%s.txt" % self.split) for year in [2007, 2012]
+                             "%s.txt" % self.split) for year in years
             ]
             self.ids = VOCDataset._read_image_ids(image_sets_file)
         else:
@@ -79,7 +80,7 @@ class VOCDataset(torch.utils.data.Dataset):
         if self.transform:
             image, boxes, labels = self.transform(image, boxes, labels)
         if self.target_transform:
-            if boxes.size!=0:
+            if boxes.size != 0:
                 boxes, labels = self.target_transform(boxes, labels)
         targets = dict(
             boxes=boxes,
