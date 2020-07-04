@@ -67,7 +67,7 @@ def inference(model, data_loader, output_folder='output'):
 def do_evaluation(model):
     from torch.utils.data import DataLoader
     model.eval()
-    data_loader = DataLoader(VOCDataset('datasets', split='val'))
+    data_loader = DataLoader(VOCDataset('datasets', split='val'),batch_size=32)
     eval_results = []
     eval_result = inference(model, data_loader)
     eval_results.append(eval_result)
