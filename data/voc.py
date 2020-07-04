@@ -22,7 +22,7 @@ class VOCDataset(torch.utils.data.Dataset):
                  transform=None,
                  target_transform=None,
                  img_size=300,
-                 years=[2007,2012],
+                 years=[2007],
                  keep_difficult=False):
         """Dataset for VOC data.
         Args:
@@ -151,14 +151,14 @@ class VOCDataset(torch.utils.data.Dataset):
         return image
 
     def collate_fn(self, batch):
-        imgs, targers, indexs = [], [], []
-        for img, target, index in zip(*batch):
-            if target['boxes']:
+        imgs, targets, indexs = [], [], []
+        for img, target, index in batch:
+            if len(target['boxes']) > 0:
                 imgs.append(img)
-                targers.append(target)
+                targets.append(target)
                 indexs.append(index)
 
         imgs = torch.stack(imgs)
-        targets = troch.stack(targets)
-        indexs = troch.stack(indexs)
+        targets = targets
+        indexs = indexs
         return imgs, targets, indexs

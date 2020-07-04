@@ -26,8 +26,7 @@ def make_dataloader(dataset, opt):
     data_loader = DataLoader(dataset,
                              num_workers=n_cpu,
                              batch_sampler=batch_sampler,
-                             pin_memory=True,
-                             collate_fn=dataset.collate_fn)
+                             pin_memory=True)
     return data_loader
 
 
@@ -42,21 +41,22 @@ def train():
     parser.add_argument('--max_iter', type=int, default=120000)
     parser.add_argument('--start_iter', type=int, default=1)
     parser.add_argument('--save_path', type=str, default='weights')
-    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--data_dir', type=str, default='datasets')
     parser.add_argument('--n_cpu', type=int, default=8, help='num workers')
     opt = parser.parse_args()
     if torch.cuda.is_available():
         # This flag allows you to enable the inbuilt cudnn auto-tuner to
         # find the best algorithm to use for your hardware.
+        torch.backends.cudnn.enabled=True
         torch.backends.cudnn.benchmark = True
     if not os.path.exists(opt.save_path):
         os.mkdir(opt.save_path)
     dataset = VOCDataset(data_dir=opt.data_dir, split='train')
     dataloader = make_dataloader(dataset, opt)
     start = time.time()
-    for iter_i, (img, target, _) in enumerate(dataloader):
-        img = Variable(img).cuda()
+    for iter_i, (img, target, _) in enumerate(dataloader,opt.start_iter):
+        img = Variable(img).cuda()        
         for key in target.keys():
             target[key] = Variable(target[key]).cuda()
         loss_dict = model(img, target)
