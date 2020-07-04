@@ -9,31 +9,8 @@ import os
 import torch
 import time
 from utils.iter_sampler import IterationBasedBatchSampler
-
-
-def reduce_loss_dict(loss_dict):
-    """
-    Reduce the loss dictionary from all processes so that process with rank
-    0 has the averaged results. Returns a dict with the same fields as
-    loss_dict, after reduction.
-    """
-    world_size = dist_util.get_world_size()
-    if world_size < 2:
-        return loss_dict
-    with torch.no_grad():
-        loss_names = []
-        all_losses = []
-        for k in sorted(loss_dict.keys()):
-            loss_names.append(k)
-            all_losses.append(loss_dict[k])
-        all_losses = torch.stack(all_losses, dim=0)
-        dist.reduce(all_losses, dst=0)
-        if dist.get_rank() == 0:
-            # only main process gets accumulated, so only divide by
-            # world_size in this case
-            all_losses /= world_size
-        reduced_losses = {k: v for k, v in zip(loss_names, all_losses)}
-    return reduced_losses
+from inference import do_evaluation
+from prettytable import PrettyTable
 
 
 def make_dataloader(dataset, opt):
@@ -92,6 +69,12 @@ def train():
         optim.step()
         lr_scheduler.step()
         if iter_i % 5000 == 0:
+            rst = do_evaluation(model)
+            table = PrettyTable()
+            table.add_row(['类别', '值'])
+            for k, v in rst[0].items():
+                table.add_column([k, rount(v, 2)])
+            print(table)
             torch.save(model, f"{opt.save_path}/{iter_i}_ssd300.pth")
         if iter_i % 10 == 0:
             memory = torch.cuda.max_memory_allocated() // 1024 // 1024
