@@ -75,6 +75,6 @@ def do_evaluation(model):
 
 
 if __name__ == '__main__':
-    model = torch.load('weights/86000_ssd300.pth')
+    model = torch.load('weights/20000_ssd300.pth')
     rst = do_evaluation(model)
     print(rst)

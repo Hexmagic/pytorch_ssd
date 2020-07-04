@@ -1,8 +1,13 @@
 import torch
+import torch.nn.functional as F
 from torch import nn
 
-from model.vgg import SeparableConv2d, vgg
 from model.loss import MultiBoxLoss
+from model.vgg import SeparableConv2d, vgg
+from utils.box_utils import (center_form_to_corner_form,
+                             convert_locations_to_boxes)
+from utils.prior_box import PriorBox
+from utils.processor import PostProcessor
 
 
 class BoxPredictor(nn.Module):
@@ -67,12 +72,15 @@ class SSDBoxHead(nn.Module):
         super().__init__()
         self.cfg = num_classes
         self.predictor = BoxPredictor(num_classes=num_classes)
+        self.post_processor = PostProcessor()
         self.loss_evaluator = MultiBoxLoss(neg_pos_ratio=3)
         self.priors = None
 
     def forward(self, features, targets=None):
         cls_logits, bbox_pred = self.predictor(features)
-        return self.loss(cls_logits, bbox_pred, targets)
+        if self.training:
+            return self.loss(cls_logits, bbox_pred, targets)
+        return self.test(cls_logits, bbox_pred)
 
     def loss(self, cls_logits, bbox_pred, targets):
         gt_boxes, gt_labels = targets['boxes'], targets['labels']
@@ -84,6 +92,16 @@ class SSDBoxHead(nn.Module):
         )
         detections = (cls_logits, bbox_pred)
         return detections, loss_dict
+
+    def test(self, cls_logits, bbox_pred):
+        if self.priors is None:
+            self.priors = PriorBox()().cuda()
+        scores = F.softmax(cls_logits, dim=2)
+        boxes = convert_locations_to_boxes(bbox_pred, self.priors, 0.1, 0.2)
+        boxes = center_form_to_corner_form(boxes)
+        detections = (scores, boxes)
+        detections = self.post_processor(detections)
+        return detections, {}
 
 
 class SSDDetector(nn.Module):

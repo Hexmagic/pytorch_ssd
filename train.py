@@ -26,7 +26,8 @@ def make_dataloader(dataset, opt):
     data_loader = DataLoader(dataset,
                              num_workers=n_cpu,
                              batch_sampler=batch_sampler,
-                             pin_memory=True)
+                             pin_memory=True,
+                             collate_fn=dataset.collate_fn)
     return data_loader
 
 
