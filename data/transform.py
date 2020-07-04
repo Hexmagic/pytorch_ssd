@@ -2,6 +2,7 @@ import torch
 from utils.box_utils import corner_form_to_center_form, convert_boxes_to_locations, assign_priors, center_form_to_corner_form
 import numpy as np
 
+
 class SSDTargetTransform:
     def __init__(self, center_form_priors, center_variance, size_variance,
                  iou_threshold):
@@ -9,8 +10,8 @@ class SSDTargetTransform:
         self.center_form_priors = center_form_priors
         self.corner_form_priors = center_form_to_corner_form(
             center_form_priors)
-        self.center_variance = center_variance
-        self.size_variance = size_variance
+        self.center_variance = center_variance  # 0.1
+        self.size_variance = size_variance  # 0.2
         self.iou_threshold = iou_threshold
 
     def __call__(self, gt_boxes, gt_labels):

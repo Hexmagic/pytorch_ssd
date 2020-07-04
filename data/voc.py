@@ -22,7 +22,7 @@ class VOCDataset(torch.utils.data.Dataset):
                  transform=None,
                  target_transform=None,
                  img_size=300,
-                 years=[2007],
+                 years=[2007,2012],
                  keep_difficult=False):
         """Dataset for VOC data.
         Args:
@@ -134,8 +134,7 @@ class VOCDataset(torch.utils.data.Dataset):
 
     def get_img_info(self, index):
         img_id = self.ids[index]
-        annotation_file = os.path.join(self.data_dir, "Annotations",
-                                       "%s.xml" % img_id)
+        annotation_file = img_id
         anno = ET.parse(annotation_file).getroot()
         size = anno.find("size")
         im_info = tuple(

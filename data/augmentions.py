@@ -68,7 +68,7 @@ class Compose(object):
     def __init__(self, transforms):
         self.transforms = transforms
 
-    def __call__(self, img, boxes=None, labels=None):
+    def __call__(self, img, boxes=[], labels=[]):
         for t in self.transforms:
             img, boxes, labels = t(img, boxes, labels)
             if boxes is not None:
@@ -82,12 +82,12 @@ class Lambda(object):
         assert isinstance(lambd, types.LambdaType)
         self.lambd = lambd
 
-    def __call__(self, img, boxes=None, labels=None):
+    def __call__(self, img, boxes=[], labels=[]):
         return self.lambd(img, boxes, labels)
 
 
 class ConvertFromInts(object):
-    def __call__(self, image, boxes=None, labels=None):
+    def __call__(self, image, boxes=[], labels=[]):
         return image.astype(np.float32), boxes, labels
 
 
@@ -95,14 +95,14 @@ class SubtractMeans(object):
     def __init__(self, mean):
         self.mean = np.array(mean, dtype=np.float32)
 
-    def __call__(self, image, boxes=None, labels=None):
+    def __call__(self, image, boxes=[], labels=[]):
         image = image.astype(np.float32)
         image -= self.mean
         return image.astype(np.float32), boxes, labels
 
 
 class ToAbsoluteCoords(object):
-    def __call__(self, image, boxes=None, labels=None):
+    def __call__(self, image, boxes=[], labels=[]):
         height, width, channels = image.shape
         boxes[:, 0] *= width
         boxes[:, 2] *= width
@@ -113,7 +113,7 @@ class ToAbsoluteCoords(object):
 
 
 class ToPercentCoords(object):
-    def __call__(self, image, boxes=None, labels=None):
+    def __call__(self, image, boxes=[], labels=[]):
         height, width, channels = image.shape
         boxes[:, 0] /= width
         boxes[:, 2] /= width
@@ -127,7 +127,7 @@ class Resize(object):
     def __init__(self, size=300):
         self.size = size
 
-    def __call__(self, image, boxes=None, labels=None):
+    def __call__(self, image, boxes=[], labels=[]):
         image = cv2.resize(image, (self.size, self.size))
         return image, boxes, labels
 
@@ -139,7 +139,7 @@ class RandomSaturation(object):
         assert self.upper >= self.lower, "contrast upper must be >= lower."
         assert self.lower >= 0, "contrast lower must be non-negative."
 
-    def __call__(self, image, boxes=None, labels=None):
+    def __call__(self, image, boxes=[], labels=[]):
         if random.randint(2):
             image[:, :, 1] *= random.uniform(self.lower, self.upper)
 
@@ -151,7 +151,7 @@ class RandomHue(object):
         assert delta >= 0.0 and delta <= 360.0
         self.delta = delta
 
-    def __call__(self, image, boxes=None, labels=None):
+    def __call__(self, image, boxes=[], labels=[]):
         if random.randint(2):
             image[:, :, 0] += random.uniform(-self.delta, self.delta)
             image[:, :, 0][image[:, :, 0] > 360.0] -= 360.0
@@ -164,7 +164,7 @@ class RandomLightingNoise(object):
         self.perms = ((0, 1, 2), (0, 2, 1), (1, 0, 2), (1, 2, 0), (2, 0, 1),
                       (2, 1, 0))
 
-    def __call__(self, image, boxes=None, labels=None):
+    def __call__(self, image, boxes=[], labels=[]):
         if random.randint(2):
             swap = self.perms[random.randint(len(self.perms))]
             shuffle = SwapChannels(swap)  # shuffle channels
@@ -177,7 +177,7 @@ class ConvertColor(object):
         self.transform = transform
         self.current = current
 
-    def __call__(self, image, boxes=None, labels=None):
+    def __call__(self, image, boxes=[], labels=[]):
         if self.current == 'BGR' and self.transform == 'HSV':
             image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         elif self.current == 'RGB' and self.transform == 'HSV':
@@ -201,7 +201,7 @@ class RandomContrast(object):
         assert self.lower >= 0, "contrast lower must be non-negative."
 
     # expects float image
-    def __call__(self, image, boxes=None, labels=None):
+    def __call__(self, image, boxes=[], labels=[]):
         if random.randint(2):
             alpha = random.uniform(self.lower, self.upper)
             image *= alpha
@@ -214,7 +214,7 @@ class RandomBrightness(object):
         assert delta <= 255.0
         self.delta = delta
 
-    def __call__(self, image, boxes=None, labels=None):
+    def __call__(self, image, boxes=[], labels=[]):
         if random.randint(2):
             delta = random.uniform(-self.delta, self.delta)
             image += delta
@@ -222,13 +222,13 @@ class RandomBrightness(object):
 
 
 class ToCV2Image(object):
-    def __call__(self, tensor, boxes=None, labels=None):
+    def __call__(self, tensor, boxes=[], labels=[]):
         return tensor.cpu().numpy().astype(np.float32).transpose(
             (1, 2, 0)), boxes, labels
 
 
 class ToTensor(object):
-    def __call__(self, cvimage, boxes=None, labels=None):
+    def __call__(self, cvimage, boxes=[], labels=[]):
         return torch.from_numpy(cvimage.astype(np.float32)).permute(
             2, 0, 1) / 255., boxes, labels
 
@@ -259,7 +259,7 @@ class RandomSampleCrop(object):
             (None, None),
         )
 
-    def __call__(self, image, boxes=None, labels=None):
+    def __call__(self, image, boxes=[], labels=[]):
         # guard against no boxes
         if boxes is not None and boxes.shape[0] == 0:
             return image, boxes, labels
