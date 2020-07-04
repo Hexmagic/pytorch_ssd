@@ -23,7 +23,7 @@ class VOCDataset(torch.utils.data.Dataset):
                  target_transform=None,
                  img_size=300,
                  years=[2007,2012],
-                 keep_difficult=True):
+                 keep_difficult=False):
         """Dataset for VOC data.
         Args:
             data_dir: the root of the VOC2007 or VOC2012 dataset, the directory contains the following sub-directories:
