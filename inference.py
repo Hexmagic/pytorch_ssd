@@ -37,7 +37,6 @@ def compute_on_dataset(model, data_loader):
     results_dict = {}
     for batch in tqdm(data_loader):
         images, targets, image_ids = batch
-        cpu_device = torch.device("cpu")
         with torch.no_grad():
             outputs = model(images.to('cuda'))
             for output in outputs:
@@ -67,7 +66,7 @@ def inference(model, data_loader, output_folder='output'):
 def do_evaluation(model):
     from torch.utils.data import DataLoader
     model.eval()
-    data_loader = DataLoader(VOCDataset('datasets', split='val'),batch_size=32)
+    data_loader = DataLoader(VOCDataset('datasets', split='val'),batch_size=32,num_workers=8)
     eval_results = []
     eval_result = inference(model, data_loader)
     eval_results.append(eval_result)
