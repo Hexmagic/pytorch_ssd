@@ -73,7 +73,7 @@ def train():
             rst = do_evaluation(model)
             table = PrettyTable()
             table.add_row(['类别', '值'])
-            for k, v in rst[0].items():
+            for k, v in rst[0]['metrics'].items():
                 table.add_row([k, round(v, 2)])
             print(table)
             torch.save(model, f"{opt.save_path}/{iter_i}_ssd300.pth")
