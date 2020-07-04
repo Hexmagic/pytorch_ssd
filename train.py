@@ -55,6 +55,12 @@ def train():
     dataset = VOCDataset(data_dir=opt.data_dir, split='train')
     dataloader = make_dataloader(dataset, opt)
     start = time.time()
+    rst = do_evaluation(model)
+    table = PrettyTable()
+    table.add_row(['类别', '值'])
+    for k, v in rst[0]['metrics'].items():
+        table.add_row([k, round(v, 2)])
+    print(table)
     for iter_i, (img, target, _) in enumerate(dataloader,opt.start_iter):
         img = Variable(img).cuda()        
         for key in target.keys():
