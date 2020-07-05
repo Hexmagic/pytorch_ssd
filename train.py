@@ -32,23 +32,24 @@ def make_dataloader(dataset, opt):
 
 def train():
 
-    optim = make_optimizer(model)
-    lr_scheduler = make_lr_scheduler(optim)
+    
 
     total_loss, reg_losses, cls_losses = [], [], []
     parser = ArgumentParser()
     parser.add_argument('--max_iter', type=int, default=120000)
     parser.add_argument('--start_iter', type=int, default=1)
     parser.add_argument('--save_path', type=str, default='weights')
-    parser.add_argument("--pretrained_weights", type=str, default='')
+    parser.add_argument("--pretrained_weight", type=str, default='')
     parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--data_dir', type=str, default='datasets')
     parser.add_argument('--n_cpu', type=int, default=8, help='num workers')
     opt = parser.parse_args()
-    if opt.pretrained_weights:
-        model = torch.load(opt.pretrained_weights).cuda()
+    if opt.pretrained_weight:
+        model = torch.load(opt.pretrained_weight).cuda()
     else:
         model = SSDDetector().cuda()
+    optim = make_optimizer(model)
+    lr_scheduler = make_lr_scheduler(optim)
     if torch.cuda.is_available():
         # This flag allows you to enable the inbuilt cudnn auto-tuner to
         # find the best algorithm to use for your hardware.
