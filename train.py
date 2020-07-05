@@ -31,31 +31,36 @@ def make_dataloader(dataset, opt):
 
 
 def train():
-    model = SSDDetector().cuda()
+
     optim = make_optimizer(model)
     lr_scheduler = make_lr_scheduler(optim)
 
-    total_loss, reg_losses, cls_losses = [], [], []    
+    total_loss, reg_losses, cls_losses = [], [], []
     parser = ArgumentParser()
     parser.add_argument('--max_iter', type=int, default=120000)
     parser.add_argument('--start_iter', type=int, default=1)
     parser.add_argument('--save_path', type=str, default='weights')
+    parser.add_argument("--pretrained_weights", type=str, default='')
     parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--data_dir', type=str, default='datasets')
     parser.add_argument('--n_cpu', type=int, default=8, help='num workers')
     opt = parser.parse_args()
+    if opt.pretrained_weights:
+        model = torch.load(opt.pretrained_weights).cuda()
+    else:
+        model = SSDDetector().cuda()
     if torch.cuda.is_available():
         # This flag allows you to enable the inbuilt cudnn auto-tuner to
         # find the best algorithm to use for your hardware.
-        torch.backends.cudnn.enabled=True
+        torch.backends.cudnn.enabled = True
         torch.backends.cudnn.benchmark = True
     if not os.path.exists(opt.save_path):
         os.mkdir(opt.save_path)
     dataset = VOCDataset(data_dir=opt.data_dir, split='train')
     dataloader = make_dataloader(dataset, opt)
     start = time.time()
-    for iter_i, (img, target, _) in enumerate(dataloader,opt.start_iter):
-        img = Variable(img).cuda()        
+    for iter_i, (img, target, _) in enumerate(dataloader, opt.start_iter):
+        img = Variable(img).cuda()
         for key in target.keys():
             target[key] = Variable(target[key]).cuda()
         loss_dict = model(img, target)
@@ -80,7 +85,7 @@ def train():
             print(f'----------ETA:{e-s}s------------')
             model.train()
             torch.save(model, f"{opt.save_path}/{iter_i}_ssd300.pth")
-        if iter_i % 10 == 0:
+        if iter_i % 20 == 0:
             memory = torch.cuda.max_memory_allocated() // 1024 // 1024
             end = time.time()
             eta = round(end - start, 2)
