@@ -78,6 +78,7 @@ def train():
                 table.add_row([k, round(v, 2)])
             print(table)
             print(f'----------ETA:{e-s}s------------')
+            model.train()
             torch.save(model, f"{opt.save_path}/{iter_i}_ssd300.pth")
         if iter_i % 10 == 0:
             memory = torch.cuda.max_memory_allocated() // 1024 // 1024
