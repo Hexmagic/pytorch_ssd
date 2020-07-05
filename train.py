@@ -35,8 +35,7 @@ def train():
     optim = make_optimizer(model)
     lr_scheduler = make_lr_scheduler(optim)
 
-    total_loss, reg_losses, cls_losses = [], [], []
-    i = 0
+    total_loss, reg_losses, cls_losses = [], [], []    
     parser = ArgumentParser()
     parser.add_argument('--max_iter', type=int, default=120000)
     parser.add_argument('--start_iter', type=int, default=1)
@@ -70,12 +69,15 @@ def train():
         optim.step()
         lr_scheduler.step()
         if iter_i % 5000 == 0:
+            s = time.time()
             rst = do_evaluation(model)
+            e = time.time()
             table = PrettyTable()
             table.add_row(['类别', '值'])
             for k, v in rst[0]['metrics'].items():
                 table.add_row([k, round(v, 2)])
             print(table)
+            print(f'----------ETA:{e-s}s------------')
             torch.save(model, f"{opt.save_path}/{iter_i}_ssd300.pth")
         if iter_i % 10 == 0:
             memory = torch.cuda.max_memory_allocated() // 1024 // 1024
