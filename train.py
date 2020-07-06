@@ -32,8 +32,6 @@ def make_dataloader(dataset, opt):
 
 def train():
 
-    
-
     total_loss, reg_losses, cls_losses = [], [], []
     parser = ArgumentParser()
     parser.add_argument('--max_iter', type=int, default=120000)

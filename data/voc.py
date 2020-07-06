@@ -22,7 +22,7 @@ class VOCDataset(torch.utils.data.Dataset):
                  transform=None,
                  target_transform=None,
                  img_size=300,
-                 years=[2007],
+                 years=[2007,2012],
                  keep_difficult=False):
         """Dataset for VOC data.
         Args:
