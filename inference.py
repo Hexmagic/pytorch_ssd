@@ -63,10 +63,12 @@ def inference(model, data_loader, output_folder='output'):
 
 
 @torch.no_grad()
-def do_evaluation(model):
+def do_evaluation(model, data_dir):
     from torch.utils.data import DataLoader
     model.eval()
-    data_loader = DataLoader(VOCDataset('datasets', split='val'),batch_size=32,num_workers=8)
+    data_loader = DataLoader(VOCDataset(data_dir, split='val'),
+                             batch_size=32,
+                             num_workers=8)
     eval_results = []
     eval_result = inference(model, data_loader)
     eval_results.append(eval_result)
@@ -74,6 +76,20 @@ def do_evaluation(model):
 
 
 if __name__ == '__main__':
-    model = torch.load('weights/20000_ssd300.pth')
-    rst = do_evaluation(model)
-    print(rst)
+    from argparse import ArgumentParser
+    from prettytable import PrettyTable
+    import time
+    parser = ArgumentParser()
+    parser.add_argument('--pretrained_weight', type=str)
+    parser.add_argument('--data_dir', type=str)
+    opt = parser.parse_args()
+    model = torch.load(opt.pretrained_weight)
+    s = time.time()
+    rst = do_evaluation(model, opt.data_dir)
+    table = PrettyTable()
+    table.add_row(['类别', '值'])
+    for k, v in rst[0]['metrics'].items():
+        table.add_row([k, round(v, 2)])
+    print(table)
+    e = time.time()
+    print(f'----------ETA:{e-s}s------------')
